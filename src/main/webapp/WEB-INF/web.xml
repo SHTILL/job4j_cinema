@@ -8,8 +8,24 @@
     <servlet-name>HallServlet</servlet-name>
     <servlet-class>ru.job4j.servlet.HallServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>SessionServlet</servlet-name>
+    <servlet-class>ru.job4j.servlet.SessionServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>PayServlet</servlet-name>
+    <servlet-class>ru.job4j.servlet.PayServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>HallServlet</servlet-name>
     <url-pattern>/hall.do</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>SessionServlet</servlet-name>
+    <url-pattern>/sessions.do</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>PayServlet</servlet-name>
+    <url-pattern>/pay.do</url-pattern>
   </servlet-mapping>
 </web-app>

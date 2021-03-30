@@ -1,39 +1,91 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <title>Payment</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
-    <title>Hello, world!</title>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </head>
 <body>
-<!-- Optional JavaScript -->
-<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" ></script>
+
+<script>
+    $(document).ready(function () {
+        let params = new URLSearchParams(document.location.search.substring(1));
+        const headerText = document.createElement("div");
+        headerText.className = "row pt-3";
+        const h3 = document.createElement("h3");
+        h3.append("Вы выбрали ряд "
+            + params.get("row")  + " место "
+            + params.get("seat") + " Сумма : "
+            + params.get("price") + " рублей.");
+        headerText.append(h3);
+        const element = document.getElementById("payForm");
+        element.parentNode.insertBefore(headerText, element);
+    })
+
+    function pay() {
+        let params = new URLSearchParams(document.location.search.substring(1));
+        const rowVal = params.get("row")
+        const seatVal = params.get("seat")
+        const nameVal = $('#username')
+        const phoneVal = $('#phone')
+        const emailVal = $('#email')
+        if (nameVal.val() === "") {
+            alert("Заполните поле ФИО")
+            return
+        }
+        if (emailVal.val() === "") {
+            alert("Заполните поле Email")
+            return
+        }
+        if (phoneVal.val() === "") {
+            alert("Заполните поле Номер телефона")
+            return;
+        }
+
+        const req = $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/job4j_cinema/pay.do",
+            data: encodeURI("session=" + JSON.stringify({description: window.sessionStorage.getItem("session")})
+            + "&ticket=" + JSON.stringify({row: rowVal, seat: seatVal})
+            + "&account=" + JSON.stringify({name: nameVal.val(), phone: phoneVal.val(), email: emailVal.val()}))
+        });
+
+        req.done(function () {
+            window.location='index.html'
+        });
+
+        req.fail(function () {
+            window.location='registration.html'
+        });
+    }
+</script>
 
 <div class="container">
-    <div class="row pt-3">
-        <h3>
-            Вы выбрали ряд 1 место 1, Сумма : 500 рублей.
-        </h3>
-    </div>
-    <div class="row">
+    <div class="row" id="payForm">
         <form>
             <div class="form-group">
                 <label for="username">ФИО</label>
                 <input type="text" class="form-control" id="username" placeholder="ФИО">
             </div>
             <div class="form-group">
-                <label for="phone">Номер телефона</label>
-                <input type="text" class="form-control" id="phone" placeholder="Номер телефона">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" placeholder="Email">
             </div>
-            <button type="button" class="btn btn-success">Оплатить</button>
+            <div class="form-group">
+                <label for="phone">Номер телефона</label>
+                <input type="number" class="form-control" id="phone" placeholder="Номер телефона">
+            </div>
+            <button type="button" class="btn btn-success" onclick="pay()">Оплатить</button>
         </form>
     </div>
 </div>

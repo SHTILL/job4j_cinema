@@ -1,69 +1,173 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <title>Cinema tickets booking service!</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+            integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+            integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+            integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-    <title>Hello, world!</title>
+    <style>
+        select {
+            width: 300px; /* Ширина списка в пикселах */
+        }
+    </style>
 </head>
 <body>
-<!-- Optional JavaScript -->
-<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" ></script>
+
 <script>
     $(document).ready(function () {
-        $.ajax({
-            type: "GET",
-            url: "http://localhost:8080/jog4j_cinema/hall.do",
-            dataType: "json",
-        }).done(function (data) {
-
-        });
+        loadSession();
     })
 
+    function loadSession() {
+        const req = $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/job4j_cinema/sessions.do",
+            data: encodeURI("date=" + JSON.stringify({date: new Date()})),
+            dataType: "json",
+        });
+        req.done(function (data) {
+            let sessions = "";
+            for (let i = 0; i < data['sessions'].length; i++) {
+                sessions += "<option value=" + data['sessions'][i]['description'] + ">" + data['sessions'][i]['description'] + "</option>";
+            }
+            $('#session').html(sessions);
+            loadHall();
+        });
+    }
+
+    function makeRadioButton(name, value, text, disabled) {
+        const label = document.createElement("label");
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = name;
+        radio.value = value;
+        radio.disabled = disabled
+
+        label.appendChild(radio);
+
+        label.appendChild(document.createTextNode(text));
+        return label;
+    }
+
+    function loadHall() {
+        const session = $('#session');
+        const req = $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/job4j_cinema/hall.do",
+            data: encodeURI("session=" + JSON.stringify({description: session.val()})),
+            dataType: "json",
+        });
+        req.done(function (data) {
+            const hall = document.getElementById("hall");
+
+            const seatNum = data["seatsInRow"]
+            const hallNewHead = document.createElement('thead');
+            const headRow = hallNewHead.insertRow();
+            for (let i = 0; i < (seatNum+1); i++) {
+                let headText;
+                if (i === 0) {
+                    headText = document.createTextNode('Ряд / Место');
+                } else {
+                    headText = document.createTextNode(i + ' Место');
+                }
+                const headCell = headRow.insertCell();
+                const bold = document.createElement('strong');
+                bold.appendChild(headText);
+                headCell.appendChild(bold);
+            }
+            hall.replaceChild(hallNewHead, hall.getElementsByTagName('thead')[0]);
+
+            const rowNum = data["rows"]
+            const hallNewBody = document.createElement('tbody');
+            for (let i = 0; i < rowNum; i++) {
+                let bodyRow = hallNewBody.insertRow();
+                for (let j = 0; j < (seatNum+1); j++)
+                {
+                    let bodyCellElement;
+                    const bodyCell = bodyRow.insertCell();
+                    if (j === 0) {
+                        bodyCellElement = document.createElement('strong');
+                        const bodyText = document.createTextNode((i + 1) + ' Ряд');
+                        bodyCellElement.appendChild(bodyText);
+                    } else {
+                        const busy  = data['seats'][i][j-1]['busy']
+                        const price = data['seats'][i][j-1]['price']
+                        bodyCellElement = makeRadioButton(  "place",
+                                                            "row=" + (i + 1) + "&seat=" + j + "&price=" + price,
+                                                            ' ' + (i + 1) + ' Ряд,' +  ' ' + j + ' Место' + ' Цена ' + price + 'р.',
+                                                            busy);
+                        if (busy) {
+                            bodyCell.style.backgroundColor = "LightGrey";
+                        }
+                    }
+                    bodyCell.appendChild(bodyCellElement);
+                }
+            }
+            hall.replaceChild(hallNewBody, hall.getElementsByTagName('tbody')[0]);
+        });
+    }
+
     function pay() {
-        window.location.href = 'payment.html';
+        const places = document.getElementsByName("place");
+        let selected = "";
+        places.forEach(function (element) {
+            if (element.checked) {
+                selected = element.value;
+            }
+        })
+        if (selected === "") {
+            alert("Выберете место")
+        } else {
+            const section = $('#session');
+            window.sessionStorage.setItem("session", section.val());
+            window.location.href = 'payment.html?' + selected;
+        }
     }
 </script>
 <div class="container">
-    <div class="row pt-3">
+    <div class="row pt-2">
         <h4>
             Бронирование месте на сеанс
         </h4>
-        <table class="table table-bordered">
+    </div>
+    <div class="row">
+        <div class="card">
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Сеанс</label>
+                    <label>
+                        <select name="session" class="form-select" aria-label=".form-select-sm" id="session" onclick="loadHall()">
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row pt-3">
+        <h4>
+            Выбор места
+        </h4>
+        <table class="table table-bordered" id="hall">
             <thead>
-            <tr>
-                <th style="width: 120px;">Ряд / Место</th>
-                <th>1</th>
-                <th>2</th>
-                <th>3</th>
-            </tr>
             </thead>
             <tbody>
-            <tr>
-                <th>1</th>
-                <td><input type="radio" name="place" value="11"> Ряд 1, Место 1</td>
-                <td><input type="radio" name="place" value="11"> Ряд 1, Место 1</td>
-                <td><input type="radio" name="place" value="11"> Ряд 1, Место 1</td>
-            </tr>
-            <tr>
-                <th>2</th>
-                <td><input type="radio" name="place" value="11"> Ряд 2, Место 1</td>
-                <td><input type="radio" name="place" value="11"> Ряд 2, Место 1</td>
-                <td><input type="radio" name="place" value="11"> Ряд 2, Место 1</td>
-            </tr>
-            <tr>
-                <th>3</th>
-                <td><input type="radio" name="place" value="11"> Ряд 3, Место 1</td>
-                <td><input type="radio" name="place" value="11"> Ряд 3, Место 1</td>
-                <td><input type="radio" name="place" value="11"> Ряд 3, Место 1</td>
-            </tr>
             </tbody>
         </table>
     </div>
