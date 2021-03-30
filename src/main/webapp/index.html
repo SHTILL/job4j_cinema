@@ -43,11 +43,17 @@
             dataType: "json",
         });
         req.done(function (data) {
+            const session = $('#session')
             let sessions = "";
             for (let i = 0; i < data['sessions'].length; i++) {
                 sessions += "<option value=" + data['sessions'][i]['description'] + ">" + data['sessions'][i]['description'] + "</option>";
             }
-            $('#session').html(sessions);
+            session.html(sessions);
+            const storedSession = window.sessionStorage.getItem("session")
+            if (storedSession != null)
+            {
+                session.val(storedSession)
+            }
             loadHall();
         });
     }

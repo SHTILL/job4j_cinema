@@ -10,6 +10,10 @@ import ru.job4j.model.Ticket;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 public class PsqlStore implements Store {
@@ -20,7 +24,7 @@ public class PsqlStore implements Store {
     private PsqlStore() {
         Properties cfg = new Properties();
         try (BufferedReader io = new BufferedReader(
-                new FileReader("db.properties")
+                new FileReader("cinema.db.properties")
         )) {
             cfg.load(io);
         } catch (Exception e) {
@@ -46,33 +50,90 @@ public class PsqlStore implements Store {
 
     @Override
     public void save(Account a) {
-
+        //TODO
     }
 
     @Override
     public void save(Ticket t) {
-
+        try (Connection cn = pool.getConnection();
+                PreparedStatement ps =  cn.prepareStatement("INSERT INTO ticket(row, seat, session_id, account_id)" +
+                        "VALUES (?, ?, " +
+                        "(SELECT id from public.film_session where description = ?), " +
+                        "(SELECT id from public.account where name = ? and email = ? and phone = ?))", PreparedStatement.RETURN_GENERATED_KEYS))
+        {
+            ps.setInt(1, t.getRow());
+            ps.setInt(2, t.getSeat());
+            ps.setString(3, t.getSession().getDescription());
+            ps.setString(4, t.getAccount().getName());
+            ps.setString(5, t.getAccount().getEmail());
+            ps.setString(6, t.getAccount().getPhone());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            LOG.warn("Exception while saving the ticket into db", e);
+        }
     }
 
     @Override
     public Collection<Ticket> findAllTickets() {
-        List<Ticket> l = new ArrayList<>();
-        l.add(new Ticket(new Session("12:00"), new Account(), 1, 2));
-        l.add(new Ticket(new Session("12:00"), new Account(), 2, 3));
-        return l;
+        List<Ticket> tickets = new ArrayList<>();
+        try (Connection cn = pool.getConnection();
+             PreparedStatement ps =  cn.prepareStatement("SELECT row, seat, " +
+                     "film_session.description as description, " +
+                     "account.name as userName, " +
+                     "email, " +
+                     "phone " +
+                     "FROM ticket " +
+                     "join account on ticket.account_id = account.id " +
+                     "join film_session on ticket.session_id = film_session.id"))
+        {
+
+            ResultSet it = ps.executeQuery();
+            while (it.next()) {
+                Account a = new Account(it.getString("userName"), it.getString("email"), it.getString("phone"));
+                Session s = new Session(it.getString("description"));
+                tickets.add(new Ticket(s, a, it.getInt("row"), it.getInt("seat")));
+            }
+        } catch (Exception e) {
+            LOG.warn("Exception while retrieving tickets", e);
+        }
+        return tickets;
     }
 
     @Override
     public Collection<Session> findSessions(Date date) {
         List<Session> sessions = new ArrayList<>();
-        sessions.add(new Session("12:00"));
-        sessions.add(new Session("14:00"));
+        try (Connection cn = pool.getConnection();
+             PreparedStatement ps =  cn.prepareStatement("SELECT description from film_session"))
+        {
+            ResultSet it = ps.executeQuery();
+            while (it.next()) {
+                sessions.add(new Session(it.getString("description")));
+            }
+        } catch (Exception e) {
+            LOG.warn("Exception while retrieving tickets", e);
+        }
         return sessions;
     }
 
     @Override
     public boolean validateAccount(Account a) {
-        return true;
+        try (Connection cn = pool.getConnection();
+             PreparedStatement ps =  cn.prepareStatement("SELECT id from account where " +
+                     "name = ? and " +
+                     "email = ? and " +
+                     "phone = ?"))
+        {
+            ps.setString(1, a.getName());
+            ps.setString(2, a.getEmail());
+            ps.setString(3, a.getPhone());
+            ResultSet it = ps.executeQuery();
+            if (it.next()) {
+                return true;
+            }
+        } catch (Exception e) {
+            LOG.warn("Exception while retrieving tickets", e);
+        }
+        return false;
     }
 
     @Override

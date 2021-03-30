@@ -34,8 +34,8 @@
 
     function pay() {
         let params = new URLSearchParams(document.location.search.substring(1));
-        const rowVal = params.get("row")
-        const seatVal = params.get("seat")
+        const rowVal = (params.get("row") - 1)
+        const seatVal = (params.get("seat") - 1)
         const nameVal = $('#username')
         const phoneVal = $('#phone')
         const emailVal = $('#email')
