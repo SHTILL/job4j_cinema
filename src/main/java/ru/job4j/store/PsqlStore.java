@@ -19,7 +19,7 @@ import java.util.*;
 public class PsqlStore implements Store {
     private static final Logger LOG = LoggerFactory.getLogger(PsqlStore.class);
     private final BasicDataSource pool = new BasicDataSource();
-    private static PsqlStore instance = new PsqlStore();
+    private static final PsqlStore instance = new PsqlStore();
 
     private PsqlStore() {
         Properties cfg = new Properties();
